@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 golang:1.23-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . .
 
 RUN go build -o redis-benchmark .
 
-FROM --platform=linux/amd64 alpine:latest
+FROM alpine:latest
 
 COPY --from=builder /app/redis-benchmark /usr/local/bin/redis-benchmark
 

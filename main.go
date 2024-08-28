@@ -88,6 +88,8 @@ func main() {
 			MasterName:    masterName,
 			SentinelAddrs: sentinelAddrsSlice,
 			Password:      redisPassword,
+			ReadTimeout:   3 * time.Second,
+			WriteTimeout:  3 * time.Second,
 		})
 	} else {
 		rdb = redis.NewClient(&redis.Options{
@@ -119,9 +121,9 @@ func main() {
 		slog.Info("Issuing commands")
 
 		t1 := time.Now()
-		cmd := rdb.EvalSha(ctx, sha1, keys, argv)
-		if cmd.Err() != nil {
-			slog.Error("Error while doing evalsha: ", cmd.Err())
+		_, err := rdb.EvalSha(ctx, sha1, keys, argv).Result()
+		if err != nil {
+			slog.Error("Error while doing evalsha: ", err)
 		} else {
 			slog.Info("Duration for evalsha: " + time.Since(t1).String())
 		}
@@ -129,11 +131,11 @@ func main() {
 		t2 := time.Now()
 
 		keys = []string{fmt.Sprintf("lockTestDeleteAfter-%s", randomKey.String())}
-		cmd = rdb.Eval(ctx, lockScript, keys, "10000", "main")
+		_, err = rdb.Eval(ctx, lockScript, keys, "10000", "main").Result()
 
 		//boolCmd := rdb.SetNX(ctx, fmt.Sprintf("lock-%s", randomKey.String()), 1, time.Second)
-		if cmd.Err() != nil && cmd.Err() != redis.Nil {
-			slog.Error("Error while acquiring lock: ", cmd.Err())
+		if err != nil && err != redis.Nil {
+			slog.Error("Error while acquiring lock: ", err)
 		} else {
 			slog.Info("Duration for acquiring eval lock: " + time.Since(t2).String())
 		}

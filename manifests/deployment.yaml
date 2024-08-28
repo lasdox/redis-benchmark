@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: redis-benchmark
-          image: lasdox/redis-benchmark:1.0.1-SNAPSHOT
+          image: lasdox/redis-benchmark:1.0.2-SNAPSHOT
           imagePullPolicy: IfNotPresent
           env:
             - name: SENTINEL_MASTER_NAME
