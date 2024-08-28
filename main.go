@@ -37,6 +37,20 @@ else
     end 
 end`
 
+const lockScript = `
+if (redis.call('exists', KEYS[1]) == 0) then 
+    redis.call('hincrby', KEYS[1], ARGV[2], 1); 
+    redis.call('pexpire', KEYS[1], ARGV[1]); 
+    return nil; 
+end; 
+if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then 
+    redis.call('hincrby', KEYS[1], ARGV[2], 1); 
+    redis.call('pexpire', KEYS[1], ARGV[1]); 
+    return nil; 
+end; 
+return redis.call('pttl', KEYS[1]);
+`
+
 func main() {
 	var rdb *redis.Client
 	redisSingleAddr := os.Getenv("REDIS_ADDR")
@@ -85,8 +99,8 @@ func main() {
 
 	ctx := context.Background()
 
-	rdb.Set(ctx, "pmsEventsCacheDeleteAfterTest", map[string]interface{}{}, 0)
-	rdb.Set(ctx, "pmsEventsExpireDeleteAfterTest", map[string]float64{}, 0)
+	rdb.Set(ctx, "pmsEventsCacheDeleteAfterTest", map[string]interface{}{}, time.Hour*2)
+	rdb.Set(ctx, "pmsEventsExpireDeleteAfterTest", map[string]float64{}, time.Hour*2)
 
 	sha1, err := rdb.ScriptLoad(ctx, cacheScript).Result()
 	if err != nil {
@@ -113,11 +127,15 @@ func main() {
 		}
 
 		t2 := time.Now()
-		boolCmd := rdb.SetNX(ctx, fmt.Sprintf("lock-%s", randomKey.String()), 1, time.Second)
-		if boolCmd.Err() != nil {
+
+		keys = []string{fmt.Sprintf("lockTestDeleteAfter-%s", randomKey.String())}
+		cmd = rdb.Eval(ctx, lockScript, keys, "10000", "main")
+
+		//boolCmd := rdb.SetNX(ctx, fmt.Sprintf("lock-%s", randomKey.String()), 1, time.Second)
+		if cmd.Err() != nil && cmd.Err() != redis.Nil {
 			slog.Error("Error while acquiring lock: ", cmd.Err())
 		} else {
-			slog.Info("Duration for acquiring lock: " + time.Since(t2).String())
+			slog.Info("Duration for acquiring eval lock: " + time.Since(t2).String())
 		}
 
 		time.Sleep(millisDuration)

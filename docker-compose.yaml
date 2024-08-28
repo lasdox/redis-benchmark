@@ -51,20 +51,20 @@ services:
     volumes:
       - ./sentinel.conf:/usr/local/etc/sentinel.conf
 
-  redis-benchmark:
-    build: .
-    container_name: redis-benchmark
-    depends_on:
-      - redis-sentinel1
-      - redis-sentinel2
-    environment:
-      REDIS_MASTER_NAME: harness-redis
-      SENTINEL_ADDRS: redis-sentinel1:26379,redis-sentinel2:26380
-      REDIS_USE_SENTINEL: true
-      INTERVAL_TIME_MILLIS: 2000
-      #REDIS_PASSWORD: masterpassword
-    networks:
-      - redisnet
+#  redis-benchmark:
+#    build: .
+#    container_name: redis-benchmark
+#    depends_on:
+#      - redis-sentinel1
+#      - redis-sentinel2
+#    environment:
+#      REDIS_MASTER_NAME: harness-redis
+#      SENTINEL_ADDRS: redis-sentinel1:26379,redis-sentinel2:26380
+#      REDIS_USE_SENTINEL: true
+#      INTERVAL_TIME_MILLIS: 2000
+#      #REDIS_PASSWORD: masterpassword
+#    networks:
+#      - redisnet
 
 networks:
   redisnet:
