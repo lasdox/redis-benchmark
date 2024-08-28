@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  redis-master:
+    image: redis:6.2
+    container_name: redis-master
+    ports:
+      - "6378:6379"
+    networks:
+      - redisnet
+
+  redis-slave:
+    image: redis:6.2
+    container_name: redis-slave
+    depends_on:
+      - redis-master
+    command: [
+      "redis-server",
+      "--slaveof", "redis-master", "6379",
+    ]
+    networks:
+      - redisnet
+
+  redis-sentinel1:
+    image: redis:6.2
+    container_name: redis-sentinel1
+    depends_on:
+      - redis-master
+      - redis-slave
+    command: >
+      redis-sentinel /usr/local/etc/sentinel.conf
+    ports:
+      - "26379:26379"
+    networks:
+      - redisnet
+    volumes:
+      - ./sentinel.conf:/usr/local/etc/sentinel.conf
+
+  redis-sentinel2:
+    image: redis:6.2
+    container_name: redis-sentinel2
+    depends_on:
+      - redis-master
+      - redis-slave
+    command: >
+      redis-sentinel /usr/local/etc/sentinel.conf
+    ports:
+      - "26380:26379"
+    networks:
+      - redisnet
+    volumes:
+      - ./sentinel.conf:/usr/local/etc/sentinel.conf
+
+  redis-benchmark:
+    build: .
+    container_name: redis-benchmark
+    depends_on:
+      - redis-sentinel1
+      - redis-sentinel2
+    environment:
+      REDIS_MASTER_NAME: harness-redis
+      SENTINEL_ADDRS: redis-sentinel1:26379,redis-sentinel2:26380
+      REDIS_USE_SENTINEL: true
+      INTERVAL_TIME_MILLIS: 2000
+      #REDIS_PASSWORD: masterpassword
+    networks:
+      - redisnet
+
+networks:
+  redisnet:
+    driver: bridge

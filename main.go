@@ -40,7 +40,7 @@ end`
 func main() {
 	var rdb *redis.Client
 	redisSingleAddr := os.Getenv("REDIS_ADDR")
-	masterName := os.Getenv("SENTINEL_MASTER_NAME")
+	masterName := os.Getenv("REDIS_MASTER_NAME")
 	sentinelAddrs := os.Getenv("SENTINEL_ADDRS")
 	redisPassword := os.Getenv("REDIS_PASSWORD")
 	useSentinelStr := os.Getenv("REDIS_USE_SENTINEL")
