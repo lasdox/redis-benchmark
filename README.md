@@ -27,8 +27,6 @@
 
 # Redis Benchmark Deployment Manifest
 
-# Redis Benchmark Deployment Manifest
-
 This document contains the Kubernetes deployment manifest for the `redis-benchmark` application.
 
 ```yaml
